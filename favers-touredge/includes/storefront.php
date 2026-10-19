@@ -8,7 +8,7 @@ add_action('init', function () {
 add_action('wp_enqueue_scripts', function () {
     $post = get_post();
     if (is_page('touredge') || ($post && has_shortcode($post->post_content, 'favers_touredge_shop'))) {
-        wp_enqueue_style('favers-touredge-shop', plugins_url('../assets/storefront.css', __FILE__), array(), '1.0.0');
+        wp_enqueue_style('favers-touredge-shop', plugins_url('../assets/storefront.css', __FILE__), array(), '1.1.0');
     }
 });
 
@@ -25,6 +25,10 @@ function favers_touredge_default_content($content) {
 }
 add_filter('the_content', 'favers_touredge_default_content', 8);
 
+function favers_touredge_types() {
+    return array('all' => 'All products', 'drivers' => 'Drivers', 'fairways' => 'Fairways', 'hybrids' => 'Hybrids', 'irons' => 'Irons', 'wedges' => 'Wedges', 'putters' => 'Putters', 'utilities' => 'Utility irons', 'balls' => 'Balls', 'accessories' => 'Accessories', 'other' => 'Other');
+}
+
 function favers_touredge_shop_options($input) {
     $read = function ($key) use ($input) {
         return isset($input[$key]) && is_string($input[$key]) ? sanitize_text_field(wp_unslash($input[$key])) : '';
@@ -32,7 +36,7 @@ function favers_touredge_shop_options($input) {
     $type = $read('touredge_type');
     $sort = $read('touredge_sort');
     return array(
-        'type' => in_array($type, array('drivers', 'irons'), true) ? $type : 'all',
+        'type' => array_key_exists($type, favers_touredge_types()) ? $type : 'all',
         'sort' => in_array($sort, array('newest', 'price-low', 'price-high'), true) ? $sort : 'newest',
         'search' => substr($read('touredge_search'), 0, 100),
     );
@@ -41,9 +45,10 @@ function favers_touredge_shop_options($input) {
 /** Scoped to a single WooCommerce shortcode invocation, never other catalogs. */
 function favers_touredge_products($options) {
     $filter = function ($query) use ($options) {
-        $type = $options['type'] === 'drivers' ? 'driver' : ($options['type'] === 'irons' ? 'iron' : '');
-        // Title matching supports existing imports without changing categories.
-        $search = trim($type . ' ' . $options['search']);
+        if ($options['type'] !== 'all') {
+            $query['tax_query'][] = array('taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => array('te-exotics-' . $options['type']), 'operator' => 'IN');
+        }
+        $search = $options['search'];
         if ($search !== '') {
             $query['s'] = $search;
             $query['search_columns'] = array('post_title');
@@ -51,9 +56,9 @@ function favers_touredge_products($options) {
         return $query;
     };
     $empty = function () {
-        echo '<div class="fte-empty"><span class="fte-eyebrow">THE NEXT ROUND STARTS HERE</span><h3>No clubs to show just yet.</h3><p>Try another search or check back as the collection grows.</p><a class="fte-text-link" href="' . esc_url(get_permalink()) . '#fte-collection">View all clubs &rarr;</a>';
+        echo '<div class="fte-empty"><span class="fte-eyebrow">THE NEXT ROUND STARTS HERE</span><h3>No products to show just yet.</h3><p>Try another search or check back as the collection grows.</p><a class="fte-text-link" href="' . esc_url(get_permalink()) . '#fte-collection">View all clubs &rarr;</a>';
         if (current_user_can('manage_woocommerce')) {
-            echo '<p class="fte-admin-note">Store manager: import your supplier CSV, assign the Tour Edge category, and publish the products. Driver and iron filters match words in product titles.</p>';
+            echo '<p class="fte-admin-note">Store manager: import your supplier CSV, assign the Tour Edge category, and publish the products. Type filters use the imported Exotics product categories.</p>';
         }
         echo '</div>';
     };
@@ -81,7 +86,7 @@ function favers_touredge_storefront() {
         <div class="fte-nav-links"><a href="#fte-collection">The collection</a><a href="#fte-guide">Find your club</a><?php if (function_exists('wc_get_cart_url')) : ?><a class="fte-cart" href="<?php echo esc_url(wc_get_cart_url()); ?>">Cart <span aria-hidden="true">&rarr;</span></a><?php endif; ?></div>
       </nav>
       <section class="fte-hero" aria-labelledby="fte-heading">
-        <div class="fte-hero-copy"><p class="fte-eyebrow"><span class="fte-dot"></span> THE TOUR EDGE COLLECTION</p><h2 id="fte-heading">Make your<br>next round<br><em>your best.</em></h2><p class="fte-lead">Find your next Tour Edge driver or iron set. A fresh start from the tee. A confident approach to the green.</p><a class="fte-button" href="#fte-collection">Explore the clubs <span aria-hidden="true">&darr;</span></a><p class="fte-hero-caption">DRIVERS &nbsp; / &nbsp; IRONS &nbsp; / &nbsp; YOUR NEXT CHAPTER</p></div>
+        <div class="fte-hero-copy"><p class="fte-eyebrow"><span class="fte-dot"></span> THE TOUR EDGE COLLECTION</p><h2 id="fte-heading">Make your<br>next round<br><em>your best.</em></h2><p class="fte-lead">Explore Tour Edge Exotics clubs, putters, golf balls and accessories. Find the exact configuration for your next round.</p><a class="fte-button" href="#fte-collection">Explore the clubs <span aria-hidden="true">&darr;</span></a><p class="fte-hero-caption">CLUBS &nbsp; / &nbsp; PUTTERS &nbsp; / &nbsp; ACCESSORIES</p></div>
         <div class="fte-hero-art"><span class="fte-art-label">BUILT FOR THE GAME YOU LOVE</span><img src="<?php echo esc_url($art); ?>" alt="" width="600" height="700" fetchpriority="high"><span class="fte-art-caption">A new perspective.<br>The same love of the game.</span><span class="fte-art-number" aria-hidden="true">01 / 18</span></div>
       </section>
       <div class="fte-strip"><span>FIND YOUR DISTANCE.</span><span>FIND YOUR FEEL.</span><span>FIND YOUR NEXT CLUB.</span></div>
@@ -89,11 +94,11 @@ function favers_touredge_storefront() {
         <div class="fte-section-heading"><div><p class="fte-eyebrow">THE LINEUP</p><h2 id="fte-collection-title">A better game starts here.</h2></div><p>From the first tee to the final approach.</p></div>
         <form class="fte-filters" method="get" action="<?php echo esc_url($base); ?>#fte-collection">
           <?php if (!get_option('permalink_structure')) : ?><input type="hidden" name="page_id" value="<?php echo esc_attr(get_queried_object_id()); ?>"><?php endif; ?>
-          <fieldset class="fte-types"><legend class="fte-sr-only">Club type</legend><?php foreach (array('all' => 'All clubs', 'drivers' => 'Drivers', 'irons' => 'Irons') as $value => $label) : ?><label><input type="radio" name="touredge_type" value="<?php echo esc_attr($value); ?>" <?php checked($options['type'], $value); ?>><span><?php echo esc_html($label); ?></span></label><?php endforeach; ?></fieldset>
+          <fieldset class="fte-types"><legend class="fte-sr-only">Club type</legend><?php foreach (favers_touredge_types() as $value => $label) : ?><label><input type="radio" name="touredge_type" value="<?php echo esc_attr($value); ?>" <?php checked($options['type'], $value); ?>><span><?php echo esc_html($label); ?></span></label><?php endforeach; ?></fieldset>
           <div class="fte-search"><label class="fte-sr-only" for="fte-search-input">Search product names</label><input id="fte-search-input" type="search" name="touredge_search" value="<?php echo esc_attr($options['search']); ?>" placeholder="Search the collection"></div>
           <div class="fte-sort"><label class="fte-sr-only" for="fte-sort-select">Sort products</label><select id="fte-sort-select" name="touredge_sort"><option value="newest" <?php selected($options['sort'], 'newest'); ?>>Newest arrivals</option><option value="price-low" <?php selected($options['sort'], 'price-low'); ?>>Price: low to high</option><option value="price-high" <?php selected($options['sort'], 'price-high'); ?>>Price: high to low</option></select></div><button class="fte-apply" type="submit">Apply <span aria-hidden="true">&rarr;</span></button>
         </form>
-        <div class="fte-products" aria-label="Tour Edge products"><?php if (class_exists('WooCommerce')) { echo favers_touredge_products($options); } else { echo '<div class="fte-empty"><h3>The collection is coming together.</h3><p>Check back soon for drivers and irons.</p></div>'; } ?></div>
+        <div class="fte-products" aria-label="Tour Edge products"><?php if (class_exists('WooCommerce')) { echo favers_touredge_products($options); } else { echo '<div class="fte-empty"><h3>The collection is coming together.</h3><p>Check back soon for the Exotics collection.</p></div>'; } ?></div>
       </section>
       <section class="fte-guide" id="fte-guide" aria-labelledby="fte-guide-title"><div class="fte-guide-intro"><p class="fte-eyebrow">KNOW YOUR NEXT CLUB</p><h2 id="fte-guide-title">Two ways to <br>move your <br><em>game forward.</em></h2></div>
         <a class="fte-guide-card" href="<?php echo esc_url(add_query_arg('touredge_type', 'drivers', $base)); ?>#fte-collection"><span class="fte-card-number">01 / OFF THE TEE</span><h3>Drivers</h3><p>Start with distance. Compare loft, shaft flex and handedness to find a setup that suits your swing.</p><span class="fte-text-link">Explore drivers <span aria-hidden="true">&rarr;</span></span></a>

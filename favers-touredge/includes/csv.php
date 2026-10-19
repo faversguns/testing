@@ -11,8 +11,8 @@ function favers_touredge_parse_csv($stream) {
     if (count($headers) !== count(array_unique($headers)) || array_diff($required, $headers)) {
         throw new RuntimeException('Required unique headers: sku,name,price,stock,description.');
     }
-    if (array_diff($headers, array_merge($required, array('image_url')))) {
-        throw new RuntimeException('Use sku,name,price,stock,description and optional image_url columns.');
+    if (array_diff($headers, array_merge($required, array('image_url', 'product_type')))) {
+        throw new RuntimeException('Use sku,name,price,stock,description and optional image_url,product_type columns.');
     }
     $rows = array();
     $seen = array();
@@ -26,6 +26,9 @@ function favers_touredge_parse_csv($stream) {
             throw new RuntimeException('Wrong column count in record ' . $line . '.');
         }
         $row = array_map('trim', array_combine($headers, $values));
+        if (isset($row['product_type']) && !in_array($row['product_type'], array('drivers', 'fairways', 'hybrids', 'irons', 'wedges', 'putters', 'utilities', 'balls', 'accessories', 'other'), true)) {
+            throw new RuntimeException('Unsupported product_type in record ' . $line . '.');
+        }
         if (!empty($row['image_url']) && (strlen($row['image_url']) > 2048 || !favers_touredge_valid_photo_url($row['image_url']))) {
             throw new RuntimeException('Unsupported image URL in record ' . $line . '. Use a Tour Edge first-party /cdn/shop/files/ image URL or add your own photos in WordPress.');
         }

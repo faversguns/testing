@@ -133,12 +133,12 @@ function do_shortcode($shortcode) {
     return '<div>Rendered product loop</div>';
 }
 favers_touredge_products(array('type' => 'drivers', 'sort' => 'price-low', 'search' => 'EXOTICS'));
-check($GLOBALS['last_query']['s'] === 'driver EXOTICS', 'driver and text search combined');
+check($GLOBALS['last_query']['s'] === 'EXOTICS' && $GLOBALS['last_query']['tax_query'][0]['terms'] === array('te-exotics-drivers'), 'driver and text search combined');
 check($GLOBALS['last_query']['search_columns'] === array('post_title'), 'search restricted to titles');
 check(strpos($GLOBALS['last_shortcode'], 'category="touredge"') !== false && strpos($GLOBALS['last_shortcode'], 'orderby="price" order="ASC"') !== false, 'Tour Edge-only scope and ascending price sort');
 check(!isset($GLOBALS['filters']['woocommerce_shortcode_products_query']), 'query filter removed after rendering');
 favers_touredge_products(array('type' => 'irons', 'sort' => 'price-high', 'search' => ''));
-check($GLOBALS['last_query']['s'] === 'iron' && strpos($GLOBALS['last_shortcode'], 'order="DESC"') !== false, 'iron filter and descending sort');
+check($GLOBALS['last_query']['tax_query'][0]['terms'] === array('te-exotics-irons') && strpos($GLOBALS['last_shortcode'], 'order="DESC"') !== false, 'iron filter and descending sort');
 favers_touredge_products(array('type' => 'all', 'sort' => 'newest', 'search' => ''));
 check(!isset($GLOBALS['last_query']['s']) && strpos($GLOBALS['last_shortcode'], 'orderby="date"') !== false, 'unfiltered collection and newest sort');
 echo "PASS: $checks regression checks (isolated WordPress/WooCommerce doubles).\n";

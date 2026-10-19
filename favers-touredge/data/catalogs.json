@@ -1,0 +1,38 @@
+{
+  "exotics-new-1": {
+    "file": "exotics-new-1.csv",
+    "label": "Exotics NEW \u2014 batch 1 (200)",
+    "currency": "USD",
+    "fetched_at": "2026-10-19T20:23:16.237790+00:00"
+  },
+  "exotics-new-2": {
+    "file": "exotics-new-2.csv",
+    "label": "Exotics NEW \u2014 batch 2 (200)",
+    "currency": "USD",
+    "fetched_at": "2026-10-19T20:23:16.237790+00:00"
+  },
+  "exotics-new-3": {
+    "file": "exotics-new-3.csv",
+    "label": "Exotics NEW \u2014 batch 3 (200)",
+    "currency": "USD",
+    "fetched_at": "2026-10-19T20:23:16.237790+00:00"
+  },
+  "exotics-new-4": {
+    "file": "exotics-new-4.csv",
+    "label": "Exotics NEW \u2014 batch 4 (32)",
+    "currency": "USD",
+    "fetched_at": "2026-10-19T20:23:16.237790+00:00"
+  },
+  "exotics-preowned-1": {
+    "file": "exotics-preowned-1.csv",
+    "label": "Exotics CERTIFIED PRE-OWNED \u2014 batch 1 (53)",
+    "currency": "USD",
+    "fetched_at": "2026-10-19T20:23:16.237790+00:00"
+  },
+  "exotics-demo-1": {
+    "file": "exotics-demo-1.csv",
+    "label": "Exotics DEMO OFFERS \u2014 batch 1 (28)",
+    "currency": "USD",
+    "fetched_at": "2026-10-19T20:23:16.237790+00:00"
+  }
+}

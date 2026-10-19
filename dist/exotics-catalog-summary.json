@@ -1,0 +1,13 @@
+{
+  "fetched_at": "2026-10-19T20:23:16.237790+00:00",
+  "currency": "USD",
+  "source": "https://www.touredge.com",
+  "all_catalog_parent_count": 326,
+  "unique_available_variants": 713,
+  "duplicate_aliases_removed": 329,
+  "groups": {
+    "new": 632,
+    "preowned": 53,
+    "demo": 28
+  }
+}

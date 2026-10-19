@@ -22,7 +22,7 @@ function media_sideload_image($url, $parent, $title, $type) {
 }
 $GLOBALS['products'][1]->update_meta_data('_favers_touredge_photo_url', 'https://www.touredge.com/cdn/shop/files/fixture.jpg?v=1');
 $catalog = favers_touredge_photo_catalog();
-check(count($catalog) === 1, 'CSV image metadata becomes photo work without a bundled catalog');
+check(isset($catalog[$GLOBALS['products'][1]->sku]), 'CSV image metadata adds photo work alongside bundled catalog');
 foreach ($catalog as $photo) {
     check(favers_touredge_valid_photo_url($photo['url']), 'bundled image uses trusted Tour Edge image path');
 }

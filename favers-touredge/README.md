@@ -1,36 +1,55 @@
-# Favers Tour Edge Shop
+# Favers Tour Edge Exotics Shop — 1.1.0
 
-A standalone WordPress/WooCommerce plugin for `favers.shop/touredge`. Runs alongside the Favers Cobra plugin, with separate shortcodes, styles, category, SKU prefix, metadata, locks, options and scripts. Requires WordPress 6.5+, PHP 7.4+ and WooCommerce.
+Standalone WordPress/WooCommerce plugin for `favers.shop/touredge`. Requires WordPress 6.5+, PHP 7.4+ and WooCommerce. Runs alongside the Cobra plugin with separate shortcodes, styles, categories, SKU prefixes, metadata, options and locks.
+
+## Complete public catalog snapshot
+
+Checked October 19, 2026: **713 unique available Exotics configurations** from 326 parent products across two public Tour Edge catalog pages. Includes **632 new**, **53 certified pre-owned**, and **28 demo offers**, in separate import groups. Removed 329 duplicate aliases by manufacturer variant ID; conflicting prices fail export instead of silently selecting one.
+
+Scope: publicly available variants whose model title contains **Exotics**, including older models, individual irons, sets, drivers, fairways, hybrids, utility irons, wedges, putters, golf balls, weights, headcovers, bags, gloves and other accessories where listed. Other Tour Edge families such as Hot Launch are excluded. Unavailable variants are excluded. A public retail available flag does not establish dealer supply or a fulfillment arrangement. New, pre-owned and demo condition remains explicit in the source title and description; no extra warranty or fulfillment promise is inferred.
+
+Each exact configuration is a separate simple WooCommerce product. Public USD prices are a snapshot, not dealer costs or an automatic price/inventory feed. The source manifest `data/exotics-sources.json` records variant IDs, manufacturer SKUs, exact source URLs, aliases, prices, condition, model and timestamp. No user-provided store exports are bundled or published.
 
 ## Install and display
 
-1. Back up WordPress and test on Bluehost staging first.
-2. Upload `dist/favers-touredge-1.0.0.zip` in **Plugins → Add New → Upload Plugin** and activate it. Keep the Cobra plugin active for your existing Cobra shop.
-3. Activation creates a published page titled **Tour Edge** with slug **touredge** and shortcode `[favers_touredge_shop]`, if no page exists there and your account can publish pages. If the page is missing, create it manually with that shortcode. A successful product import can also create this page if the path is free. Existing custom page content is never overwritten.
-4. Choose a full-width page template where available, and clear Bluehost's cache. The design includes a blue-and-white introduction, driver/iron browsing, product-title search, price sorting, cart access and an empty state. Theme headers and footers remain active.
+1. Back up WordPress and test on Bluehost staging first. Install/configure WooCommerce, USD store currency, tax treatment, shipping, Cart/Checkout pages and a payment gateway.
+2. Upload **favers-touredge-1.1.0.zip** under **Plugins → Add New → Upload Plugin**. Choose **Replace current with uploaded** if an older version is installed. Activate. Keep the Cobra plugin active for your Cobra shop.
+3. Activation creates a published **Tour Edge** page, slug **touredge**, if that page does not exist and your account can publish pages. Otherwise create/edit that page and add a Shortcode block containing `[favers_touredge_shop]`. You can also put this shortcode on your existing `/tour-edge-exotics/` page. Existing custom page content is preserved.
+4. A full-width page template gives more room. Clear Bluehost's cache after updating. Theme headers/footers remain active.
 
-## Import real products and prices
+The storefront includes mobile layouts, club-type browsing, product-title search, price sorting, cart links and an informative empty state. Imported subcategories distinguish drivers, fairways, hybrids, irons, wedges, putters, utility irons, balls and accessories. Existing products from older plugin versions need reimporting with Create missing unchecked to receive those type categories.
 
-Open **WooCommerce → Tour Edge Import**. **Fetch Tour Edge catalog** attempts to read the public JSON catalog and USD currency from `https://www.touredge.com/`. It validates both before saving any snapshot. This adapter requires compatible public catalog endpoints; website access and compatibility have not yet been verified from the cloud environment because its network policy blocks Tour Edge. No Tour Edge products, prices or photos are bundled or fabricated.
+## Import the available products
 
-If fetching succeeds on Bluehost, choose a dated snapshot batch in **Product source**, preview it, then select **Apply import** to create draft products. Snapshot batches have at most 200 configurations. The store must use USD for fetched prices. Only publicly available standard configurations with driver/iron product titles are included; headcovers, custom configurations and other club types are excluded. Different configurations are separate simple products. Single irons retain their exact configuration and price; review set composition carefully. The fetch fails rather than silently truncating a catalog of 250 or more parent products. Use supplier CSVs if the public data is unavailable, too large, or incompatible.
+Open **WooCommerce → Tour Edge Import → Product source**. No fetch or CSV download is necessary for the included snapshot.
 
-Alternatively upload an authorized UTF-8 supplier CSV with the exact headers `sku,name,price,stock,description` and optional `image_url`. Prices must be positive, use a decimal point and be in your store currency; stock must be a nonnegative integer. Quote fields containing commas. Maximum 200 rows / 1 MB. No sample data represents actual inventory. Existing Cobra products are never updated by this importer.
+- Choose the four **Exotics NEW** batches, one at a time: **200, 200, 200, 32**.
+- Preview each batch, then check **Apply import** and submit again.
+- **Create missing variant SKUs only** is selected by default. It skips existing matching SKUs, leaving them unchanged. New products are drafts for review.
+- **Special order** is selected by default. Zero local stock becomes WooCommerce **Allow, but notify customer**, with a special-order label. Confirm supply and delivery timing before publishing; no order is sent to Tour Edge automatically.
+- Import the separate **CERTIFIED PRE-OWNED** (53) and **DEMO OFFERS** (28) batches only if you intend and are able to sell those conditions.
+- Review descriptions, exact handedness/loft/shaft/set composition, taxes, shipping and images, then publish selected products. Test checkout in gateway test mode before taking orders. Cart/Checkout Blocks may present availability differently from classic templates and need staging validation.
 
-Special orders are selected by default: zero local stock becomes WooCommerce **Allow, but notify customer**, with a special-order label. Confirm supplier fulfillment and communicate delivery timing before publishing. Uncheck Special order to block purchases at zero stock. The plugin sends no fulfillment request and supplies no dealer account or shipping promise.
+SKU `TE-<variant ID>` becomes `touredge-TE-<variant ID>`. Your older manually named products may describe the same models without exact variant IDs/specifications; those cannot be safely merged automatically. Review them before publishing new configuration listings to avoid duplicate storefront offerings.
 
-Review draft products, configure taxes, shipping, imagery, club specifications and payment gateways, then publish. Category must be **Tour Edge** (slug `touredge`) and catalog visibility must allow shop display. Test checkout in your gateway's test mode before taking orders. Cart/Checkout Blocks may present availability differently from classic templates and need staging validation.
+Uncheck Create missing only when you intend a reimport to update existing importer-owned simple products: title, description, regular price, stock, special-order settings, image source metadata and categories. Reimports clear sale pricing, preserve existing publication status and leave unrelated products alone. Absent products are unchanged; disable ordering manually when your supplier can no longer fulfill them. Writes are not transactional; reported partial imports can be retried by SKU.
 
-## Photos and updates
+## Photos
 
-Fetched photos, when supported, use Tour Edge's first-party `/cdn/shop/files/` or `/cdn/shop/products/` URLs. CSVs may provide the same URLs in `image_url`. Click **Add missing product photos** and keep the page open. Downloads run one product per request; shared image attachments are reused. Existing photos, stock, prices and publication status are preserved. Stop/resume is safe. If the image service or URL format is incompatible, use **Products → Edit → Product image** to upload your authorized supplier photos.
+Every bundled row includes a manufacturer photo URL. After import, click **Add missing product photos** and keep the page open. It processes one product per request and reuses shared attachments in the Media Library. Existing featured images, prices, stock and publication status are preserved. Stop/resume and repeat runs are supported.
 
-The WordPress host needs outbound HTTPS to `www.touredge.com`, a writable Media Library and a working image editor. Downloads retain WordPress safe-HTTP, TLS and file-type validation and are bounded by time and size. Using manufacturer photos remains subject to your supplier/media terms.
+URLs use Tour Edge's first-party `/cdn/shop/files/` or `/cdn/shop/products/` paths. Images are model/variant catalog photos, not guaranteed photographs of each individual shaft or club configuration. Review them before publishing and use imagery under your applicable supplier/media terms. Bluehost needs outbound HTTPS to `www.touredge.com`, writable uploads and a working image editor. Requests retain WordPress safe-HTTP, TLS and image-type checks, with bounded download time/size. Media upload and WooCommerce management capabilities plus a valid nonce are required.
 
-SKU `ABC` maps to `touredge-ABC`; fetched variant IDs use `touredge-TE-<id>`. Only importer-owned simple products can be updated. Reimports change product title, description, regular price, stock, special-order settings and category, clear sale pricing, and retain existing publication status. Products absent from later snapshots remain unchanged: manually disable ordering for items your supplier can no longer fulfill. No scheduled price or inventory synchronization runs. Writes are not transactional; reported partial imports can be retried by SKU.
+## Refresh or supply your own data
 
-Photo batches and imports share `favers_touredge_import_lock`. If a PHP request crashes and leaves the lock behind, an administrator can remove that option after confirming no job is running. Deactivation does not delete products, pages, options or attachments.
+**Fetch Tour Edge catalog** traverses up to three public pages with repeated-page detection and a time budget. It verifies USD currency and normalizes all available Exotics types. Failed/incomplete traversal preserves the previous snapshot. It creates selectable batches, not products. This is a manual snapshot refresh; there is no scheduled synchronization.
 
-## Validation
+Alternatively upload a UTF-8 supplier CSV with headers `sku,name,price,stock,description`; optional columns are `image_url,product_type`. Maximum 200 rows / 1 MB. Price: positive decimal without a currency symbol, in store currency; stock: nonnegative integer. Quote fields containing commas. Product types: drivers, fairways, hybrids, irons, wedges, putters, utilities, balls, accessories, other. Image URLs must use the supported Tour Edge first-party paths, or add your own product photos manually in WordPress.
 
-Run `php favers-touredge/tests/run.php` from the repository root for isolated importer and storefront regression checks. Tests use WordPress/WooCommerce doubles and do not establish live WordPress, remote-catalog or checkout readiness. Standalone design preview: generate `dist/touredge-preview.html` with `php favers-touredge/tests/render.php`, serve the repository on port 8000, then run `node favers-touredge/tests/browser.cjs` with Playwright and Chromium available. `tests/browser-photos.cjs` verifies photo batch UI behavior with mocked AJAX responses.
+Photo batches and imports share `favers_touredge_import_lock`. If a PHP request crashes, an administrator can remove that option after confirming no job is running. Deactivation deletes no products, pages or attachments.
+
+## Development and validation
+
+Run `php favers-touredge/tests/admin.php` for isolated importer, snapshot, admin, coexistence and bundle checks; `php favers-touredge/tests/photos.php` for isolated media tests. Doubles do not establish live WordPress or checkout readiness.
+
+For design checks, generate `dist/touredge-preview.html` with `php favers-touredge/tests/render.php`, serve the repository on port 8000, then run `node favers-touredge/tests/browser.cjs` with Playwright and Chromium available. `tests/browser-photos.cjs` checks automatic photo batches, failure handling and stopping with mocked AJAX. Source snapshot regeneration: `python3 favers-touredge/tools/export-exotics.py`; review output before packaging. Package the plugin directory excluding tests/tools; the ZIP must contain the `favers-touredge/` root directory.

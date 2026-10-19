@@ -5,7 +5,7 @@ add_action('admin_enqueue_scripts', function ($hook) {
     if ($hook !== 'woocommerce_page_favers-touredge') {
         return;
     }
-    wp_enqueue_script('favers-touredge-photos', plugins_url('../assets/photos.js', __FILE__), array(), '1.0.0', true);
+    wp_enqueue_script('favers-touredge-photos', plugins_url('../assets/photos.js', __FILE__), array(), '1.1.0', true);
     wp_localize_script('favers-touredge-photos', 'faversTourEdgePhotos', array(
         'url' => admin_url('admin-ajax.php'), 'nonce' => wp_create_nonce('favers_touredge_photos'),
     ));
