@@ -28,6 +28,8 @@ class WC_Product_Simple {
     function is_type($type) { return $this->type === $type; }
     function get_meta($key) { return $this->meta[$key] ?? ''; }
     function get_stock_status() { return $this->data['stock_status'] ?? ''; }
+    function get_id() { return $this->id; }
+    function get_image_id(...$args) { return $this->data['image_id'] ?? 0; }
     function update_meta_data($key, $value) { $this->meta[$key] = $value; }
     function get_category_ids() { return $this->data['category_ids'] ?? array(); }
     function set_sku($sku) { $this->sku = $sku; }

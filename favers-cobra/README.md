@@ -1,5 +1,15 @@
 # Favers Cobra Importer
 
+## Version 1.3: add photos to products already imported
+
+Update with the 1.3.0 ZIP, then open **WooCommerce → Cobra Import → Product photos** and click **Add missing product photos**. Keep the page open while it runs. It processes one product per request, downloads the 26 shared manufacturer catalog images into WordPress's Media Library, and reuses those attachments across the 306 included configurations. Existing featured images are never replaced. It does not reimport products or change their prices, stock, special-order settings or publication status. Stop/resume and repeat runs are supported.
+
+Images come from the corresponding Cobra catalog records. These are model-level manufacturer photos, not guaranteed photographs of every individual shaft, handedness or set configuration. Review them against the product specification before publishing, and use the manufacturer imagery under your applicable supplier/media terms. Custom-uploaded CSV products outside the included catalog need their own images.
+
+An administrator or shop manager must have both WooCommerce management and media upload permissions. Requests use the logged-in WordPress session and a nonce, with no additional credentials. Download requests are restricted to the bundled `/cdn/shop/files/` or `/cdn/shop/products/` image paths on `www.cobragolf.com` and retain WordPress TLS, safe-HTTP and image-type checks. These are the first-party image URLs used by Cobra's own storefront. Download failures stop the run and show an error so you can retry. Bluehost must allow outbound HTTPS to `www.cobragolf.com`, and WordPress uploads must be writable with a working image editor. Reloading the page after a browser interruption is safe; previously saved images remain.
+
+For isolated photo validation, run `php tests/photos.php` (media operations use doubles) and `node favers-cobra/tests/browser-photos.cjs` from the repository root with Playwright/Chromium available. The latter tests automatic batches, failure handling and stopping. Actual Media Library downloads and resizing still require validation on your WordPress host.
+
 ## Version 1.2: current-price snapshots and special orders
 
 The import form now has a **Special order** checkbox, selected by default for this store's requested workflow. When checked, imported products use WooCommerce backorders **Allow, but notify customer**. A zero-stock product is saved as `onbackorder`, not falsely marked as local inventory. Catalog and product availability messages say **Special order**, and the classic cart notification explains it is not held in stock. The classic checkout also stores this label in the order line. Test WooCommerce Cart/Checkout Blocks and your theme on staging: they may present availability differently. No fulfillment request is sent to Cobra and no delivery promise is invented.

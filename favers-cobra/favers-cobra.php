@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Favers Cobra Importer
  * Description: A drivers and irons storefront with an authorized supplier CSV importer for WooCommerce.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Requires at least: 6.5
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
@@ -12,6 +12,7 @@ defined('ABSPATH') || exit;
 require_once __DIR__ . '/includes/csv.php';
 require_once __DIR__ . '/includes/storefront.php';
 require_once __DIR__ . '/includes/special-order.php';
+require_once __DIR__ . '/includes/photos.php';
 
 add_action('admin_menu', function () {
     add_submenu_page('woocommerce', 'Cobra Import', 'Cobra Import', 'manage_woocommerce', 'favers-cobra', 'favers_cobra_admin');
@@ -87,7 +88,10 @@ function favers_cobra_admin() {
     $special_order = !isset($_POST['favers_cobra_import']) || isset($_POST['special_order']);
     echo '<p><label><input type="checkbox" name="special_order" value="1" ' . ($special_order ? 'checked' : '') . '> Special order: accept orders at zero stock and notify shoppers</label></p><p>Use zero stock for items you do not hold. Confirm supplier fulfillment and communicate lead times before publishing. Uncheck Special order to prevent checkout at zero stock. This choice applies to every row in this import; it does not update products absent from the CSV.</p>';
     submit_button('Validate / Import');
-    echo '</form></div>';
+    echo '</form>';
+    echo '<hr><h2>Product photos</h2><p>Add the manufacturer catalog photo to imported Cobra products that have no featured image. Existing images, prices, stock, special-order settings and publication status are preserved. Shared photos are downloaded once to your Media Library and reused across club configurations.</p><p>This runs in small batches while this page stays open. You can stop and resume safely. Applies to the included driver and iron catalogs; custom CSV products need their own photos.</p>';
+    echo '<p><button type="button" class="button button-primary" id="fc-add-photos">Add missing product photos</button> <button type="button" class="button" id="fc-stop-photos" disabled>Stop</button></p><p id="fc-photo-status" role="status" aria-live="polite"></p>';
+    echo '</div>';
 }
 
 function favers_cobra_import($rows, $preview, $special_order = false) {
