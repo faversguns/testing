@@ -2,6 +2,9 @@
 // Isolated regression tests. These doubles do not replace staging validation.
 define('ABSPATH', __DIR__);
 function add_action(...$args) {}
+function add_filter($name, $callback, ...$args) { $GLOBALS['filters'][$name] = $callback; }
+function remove_filter($name, $callback) { unset($GLOBALS['filters'][$name]); }
+function remove_action(...$args) {}
 function sanitize_text_field($s) { return strip_tags($s); }
 function sanitize_textarea_field($s) { return strip_tags($s); }
 function wc_get_product_id_by_sku($sku) {
@@ -69,7 +72,7 @@ favers_cobra_import($rows, false);
 $p = $GLOBALS['products'][1];
 check($p->sku === 'cobra-ABC' && $p->data['status'] === 'draft', 'SKU prefix and draft default');
 check($p->data['regular_price'] === '299.99' && $p->data['stock_quantity'] === 2, 'price and stock');
-check(strpos($GLOBALS['page']['post_content'], '[products category="cobra"') !== false, 'catalog page shortcode');
+check(strpos($GLOBALS['page']['post_content'], '[favers_cobra_shop]') !== false, 'catalog page shortcode');
 $existing_page = $GLOBALS['page'];
 $p->data['status'] = 'publish';
 $p->data['category_ids'][] = 99;
@@ -89,4 +92,31 @@ $p->meta['_favers_cobra_source'] = 'supplier_csv'; $p->type = 'variable';
 $rejected = false;
 try { favers_cobra_import($rows, false); } catch (RuntimeException $e) { $rejected = true; }
 check($rejected, 'variable products protected');
+function wp_unslash($s) { return stripslashes($s); }
+$options = favers_cobra_shop_options(array('cobra_type' => 'irons', 'cobra_sort' => 'price-low', 'cobra_search' => 'Forged'));
+check($options === array('type' => 'irons', 'sort' => 'price-low', 'search' => 'Forged'), 'valid storefront options');
+$options = favers_cobra_shop_options(array('cobra_type' => array('drivers'), 'cobra_sort' => 'invalid', 'cobra_search' => array('x')));
+check($options === array('type' => 'all', 'sort' => 'newest', 'search' => ''), 'malformed query parameters handled');
+check(strlen(favers_cobra_shop_options(array('cobra_search' => str_repeat('a', 200)))['search']) === 100, 'bounded search');
+function is_admin() { return false; }
+function is_page($slug) { return true; }
+function in_the_loop() { return true; }
+function is_main_query() { return true; }
+check(favers_cobra_default_content('') === '[favers_cobra_shop]', 'empty Cobra page gains storefront');
+check(favers_cobra_default_content('<!-- wp:shortcode -->[products category="cobra" paginate="true" limit="12"]<!-- /wp:shortcode -->') === '[favers_cobra_shop]', 'original catalog upgrades');
+check(favers_cobra_default_content('<p>My custom content</p>') === '<p>My custom content</p>', 'custom content preserved');
+function do_shortcode($shortcode) {
+    $GLOBALS['last_shortcode'] = $shortcode;
+    $GLOBALS['last_query'] = ($GLOBALS['filters']['woocommerce_shortcode_products_query'])(array());
+    return '<div>Rendered product loop</div>';
+}
+favers_cobra_products(array('type' => 'drivers', 'sort' => 'price-low', 'search' => 'DARKSPEED'));
+check($GLOBALS['last_query']['s'] === 'driver DARKSPEED', 'driver and text search combined');
+check($GLOBALS['last_query']['search_columns'] === array('post_title'), 'search restricted to titles');
+check(strpos($GLOBALS['last_shortcode'], 'category="cobra"') !== false && strpos($GLOBALS['last_shortcode'], 'orderby="price" order="ASC"') !== false, 'Cobra-only scope and ascending price sort');
+check(!isset($GLOBALS['filters']['woocommerce_shortcode_products_query']), 'query filter removed after rendering');
+favers_cobra_products(array('type' => 'irons', 'sort' => 'price-high', 'search' => ''));
+check($GLOBALS['last_query']['s'] === 'iron' && strpos($GLOBALS['last_shortcode'], 'order="DESC"') !== false, 'iron filter and descending sort');
+favers_cobra_products(array('type' => 'all', 'sort' => 'newest', 'search' => ''));
+check(!isset($GLOBALS['last_query']['s']) && strpos($GLOBALS['last_shortcode'], 'orderby="date"') !== false, 'unfiltered collection and newest sort');
 echo "PASS: $checks regression checks (isolated WordPress/WooCommerce doubles).\n";

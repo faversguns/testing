@@ -1,5 +1,15 @@
 # Favers Cobra Importer
 
+## Version 1.1: drivers and irons storefront
+
+The plugin now includes a responsive green-and-cream Cobra shop with original club illustrations, collection search, driver/iron filters, price sorting, a buying guide, cart access and helpful empty states. Products, prices, images and stock come from WooCommerce; no sample products or invented offers appear on the live page. The illustration is decorative, not an actual product photograph. Filters use product-title words `driver` and `iron`, so name your products accordingly. Search also matches product titles. Handedness, shaft and loft filters are not included because the supplier CSV does not provide those fields.
+
+To update the installed plugin: upload the new ZIP in **Plugins → Add New → Upload Plugin**, then choose **Replace current with uploaded**. Existing products remain in place. Back up and test on staging first.
+
+Edit **Pages → Cobra** and add one **Shortcode block** containing `[favers_cobra_shop]`. Use a full-width page template if your theme offers one, and disable the theme's page title on this page if you want to avoid a second Cobra heading. The plugin automatically renders the new design for an empty `/cobra` page or the exact original generated products shortcode. It does not overwrite custom page content. Clear Bluehost/WordPress caches after updating. The theme's existing header and footer remain active.
+
+If there is no Cobra page yet, create and publish one with slug `cobra` and the shortcode above; you do not have to import products to use the design. An applied import can also create the page. New imported products remain drafts until reviewed and published. The collection shows WooCommerce's standard product cards and checkout links. Configure your WooCommerce Cart and Checkout pages. For a useful catalog, add actual authorized product photographs and complete club specifications to each product.
+
 WordPress 6.5+, PHP 7.4+, and WooCommerce required. Independent integration; not endorsed by Cobra. No public-site scraping, supplier account, resale permission, product imagery or live inventory feed is included.
 
 ## Bluehost installation
@@ -10,7 +20,7 @@ WordPress 6.5+, PHP 7.4+, and WooCommerce required. Independent integration; not
 4. Obtain your authorized Cobra supplier catalog. Convert it to UTF-8 CSV with exactly `sku,name,price,stock,description` headers. See `example.csv` for format only; it is not real product data. Prices use a decimal point, no currency sign; stock is a nonnegative integer. Quote descriptions containing commas. Maximum 200 products per file, 1 MB. Split larger catalogs. Variations (shaft, loft, handedness), images and automatic synchronization are not supported by this version.
 5. Open **WooCommerce → Cobra Import**. Upload and preview first, then upload again with **Apply import** checked.
 6. Review draft products, add authorized images, shipping weights/dimensions and any other required attributes, then publish. Existing importer-owned products retain their status when updated. Ensure stock is refreshed from your supplier before accepting orders.
-7. The first applied import creates a published `/cobra` catalog page if that path is unused and your account can publish pages. It uses `[products category="cobra" paginate="true" limit="12"]`. Existing pages are never overwritten; add that shortcode yourself. Set WordPress permalinks as needed for `/cobra`. Products appear only once published and visible in the catalog.
+7. The first applied import creates a published `/cobra` catalog page if that path is unused and your account can publish pages. It uses `[favers_cobra_shop]`. Existing pages are never overwritten; add that shortcode yourself. Set WordPress permalinks as needed for `/cobra`. Products appear only once published and visible in the catalog.
 8. Test add-to-cart and checkout in your payment gateway's test mode before going live. Configure actual fulfillment with your supplier separately.
 
 ## Update behavior
@@ -22,3 +32,5 @@ Writes are not a database transaction. A runtime error can leave an explicitly r
 ## Development
 
 Run `php tests/run.php` for parser and importer regression tests. Package from the repository root with `zip -r dist/favers-cobra.zip favers-cobra -x '*/tests/*'`. No dependencies or build step are required. Full WordPress/WooCommerce integration and Bluehost checkout verification must be performed on staging; isolated tests do not establish production readiness.
+
+For standalone design checks, from the repository root run `php favers-cobra/tests/render.php > dist/preview.html`, serve the root with Python on port 8000, and run `node favers-cobra/tests/browser.cjs` with Playwright available. Set `CHROMIUM_PATH` if Chromium is not at `/usr/bin/chromium`. The fixture intentionally uses a non-live empty catalog and cannot verify real WooCommerce queries or checkout. It verifies desktop/mobile overflow, illustration loading, cart navigation target, and filter form submission, and writes screenshots into `dist/`.

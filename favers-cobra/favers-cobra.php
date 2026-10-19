@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Favers Cobra Importer
- * Description: Import an authorized Cobra supplier CSV into WooCommerce and create a Cobra catalog page.
- * Version: 1.0.0
+ * Description: A drivers and irons storefront with an authorized supplier CSV importer for WooCommerce.
+ * Version: 1.1.0
  * Requires at least: 6.5
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
@@ -10,6 +10,7 @@
  */
 defined('ABSPATH') || exit;
 require_once __DIR__ . '/includes/csv.php';
+require_once __DIR__ . '/includes/storefront.php';
 
 add_action('admin_menu', function () {
     add_submenu_page('woocommerce', 'Cobra Import', 'Cobra Import', 'manage_woocommerce', 'favers-cobra', 'favers_cobra_admin');
@@ -20,6 +21,7 @@ function favers_cobra_admin() {
         return;
     }
     echo '<div class="wrap"><h1>Favers Cobra Import</h1>';
+    echo '<p>Storefront: add a Shortcode block containing <code>[favers_cobra_shop]</code> to your Cobra page. Empty /cobra pages and the original generated catalog automatically use the new design. Custom page content is preserved.</p>';
     if (!class_exists('WooCommerce')) {
         echo '<p>Install and activate WooCommerce first.</p></div>';
         return;
@@ -122,12 +124,12 @@ function favers_cobra_import($rows, $preview) {
         $page_id = wp_insert_post(array(
             'post_title' => 'Cobra', 'post_name' => 'cobra', 'post_type' => 'page',
             'post_status' => 'publish',
-            'post_content' => '<!-- wp:shortcode -->[products category="cobra" paginate="true" limit="12"]<!-- /wp:shortcode -->',
+            'post_content' => '<!-- wp:shortcode -->[favers_cobra_shop]<!-- /wp:shortcode -->',
         ), true);
         if (is_wp_error($page_id)) {
-            return $saved . ' products saved. Page creation failed; create /cobra manually with [products category="cobra" paginate="true" limit="12"].';
+            return $saved . ' products saved. Page creation failed; create /cobra manually with [favers_cobra_shop].';
         }
         return $saved . ' products saved. Cobra catalog page created; new products are drafts pending your review.';
     }
-    return $saved . ' products saved. Existing /cobra content was preserved (or page-publishing permission is missing). Add [products category="cobra" paginate="true" limit="12"] to your Cobra page. New products remain drafts.';
+    return $saved . ' products saved. Existing /cobra content was preserved (or page-publishing permission is missing). Add [favers_cobra_shop] to your Cobra page. New products remain drafts.';
 }
