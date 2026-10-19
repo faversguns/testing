@@ -8,7 +8,7 @@ add_action('init', function () {
 add_action('wp_enqueue_scripts', function () {
     $post = get_post();
     if (is_page('cobra') || ($post && has_shortcode($post->post_content, 'favers_cobra_shop'))) {
-        wp_enqueue_style('favers-cobra-shop', plugins_url('../assets/storefront.css', __FILE__), array(), '1.1.0');
+        wp_enqueue_style('favers-cobra-shop', plugins_url('../assets/storefront.css', __FILE__), array(), '1.2.0');
     }
 });
 

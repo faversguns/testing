@@ -27,6 +27,7 @@ class WC_Product_Simple {
     public $type = 'simple';
     function is_type($type) { return $this->type === $type; }
     function get_meta($key) { return $this->meta[$key] ?? ''; }
+    function get_stock_status() { return $this->data['stock_status'] ?? ''; }
     function update_meta_data($key, $value) { $this->meta[$key] = $value; }
     function get_category_ids() { return $this->data['category_ids'] ?? array(); }
     function set_sku($sku) { $this->sku = $sku; }
@@ -92,6 +93,22 @@ $p->meta['_favers_cobra_source'] = 'supplier_csv'; $p->type = 'variable';
 $rejected = false;
 try { favers_cobra_import($rows, false); } catch (RuntimeException $e) { $rejected = true; }
 check($rejected, 'variable products protected');
+$p->type = 'simple';
+$rows[0]['stock'] = '0';
+favers_cobra_import($rows, false, true);
+check($p->data['backorders'] === 'notify' && $p->data['stock_status'] === 'onbackorder', 'special order purchasable at zero local stock');
+check(favers_cobra_is_special_order($p), 'special-order badge eligible');
+check(strpos(($GLOBALS['filters']['woocommerce_get_availability_text'])('In stock', $p), 'Special order') !== false, 'availability explains special order');
+check(strpos(($GLOBALS['filters']['woocommerce_cart_item_backorder_notification'])('Default', $p->id), 'Special order') !== false, 'cart notification explains special order');
+$rows[0]['stock'] = '3';
+favers_cobra_import($rows, false, true);
+check($p->data['stock_status'] === 'instock' && !favers_cobra_is_special_order($p), 'in-stock imports remain in stock');
+$rows[0]['stock'] = '0';
+favers_cobra_import($rows, false, false);
+check($p->data['backorders'] === 'no' && $p->data['stock_status'] === 'outofstock' && !favers_cobra_is_special_order($p), 'special orders can be disabled by reimport');
+$before = $p->data;
+$result = favers_cobra_import($rows, true, true);
+check($before === $p->data && strpos($result, 'Special orders enabled') !== false, 'preview communicates special orders without writes');
 function wp_unslash($s) { return stripslashes($s); }
 $options = favers_cobra_shop_options(array('cobra_type' => 'irons', 'cobra_sort' => 'price-low', 'cobra_search' => 'Forged'));
 check($options === array('type' => 'irons', 'sort' => 'price-low', 'search' => 'Forged'), 'valid storefront options');

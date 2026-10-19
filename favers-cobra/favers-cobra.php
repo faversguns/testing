@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Favers Cobra Importer
  * Description: A drivers and irons storefront with an authorized supplier CSV importer for WooCommerce.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Requires at least: 6.5
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
@@ -11,6 +11,7 @@
 defined('ABSPATH') || exit;
 require_once __DIR__ . '/includes/csv.php';
 require_once __DIR__ . '/includes/storefront.php';
+require_once __DIR__ . '/includes/special-order.php';
 
 add_action('admin_menu', function () {
     add_submenu_page('woocommerce', 'Cobra Import', 'Cobra Import', 'manage_woocommerce', 'favers-cobra', 'favers_cobra_admin');
@@ -35,11 +36,23 @@ function favers_cobra_admin() {
             if (!$locked) {
                 throw new RuntimeException('Another import is running. If a request crashed, an administrator can remove the favers_cobra_import_lock option after verifying no import is active.');
             }
-            $file = isset($_FILES['cobra_csv']) ? $_FILES['cobra_csv'] : array();
-            if (!isset($file['error'], $file['tmp_name'], $file['size']) || $file['error'] !== UPLOAD_ERR_OK || $file['size'] > 1048576 || !is_uploaded_file($file['tmp_name'])) {
-                throw new RuntimeException('Upload a CSV file no larger than 1 MB.');
+            $catalogs = array('drivers' => 'cobra-drivers-2026-10-19.csv', 'irons' => 'cobra-irons-2026-10-19.csv');
+            $source = isset($_POST['cobra_source']) && is_string($_POST['cobra_source']) ? $_POST['cobra_source'] : '';
+            if ($source !== '') {
+                if (!isset($catalogs[$source])) {
+                    throw new RuntimeException('Unknown catalog selection.');
+                }
+                if (get_woocommerce_currency() !== 'USD') {
+                    throw new RuntimeException('Included Cobra prices are in USD. Set your store currency to USD or upload your own converted price CSV.');
+                }
+                $stream = fopen(__DIR__ . '/data/' . $catalogs[$source], 'rb');
+            } else {
+                $file = isset($_FILES['cobra_csv']) ? $_FILES['cobra_csv'] : array();
+                if (!isset($file['error'], $file['tmp_name'], $file['size']) || $file['error'] !== UPLOAD_ERR_OK || $file['size'] > 1048576 || !is_uploaded_file($file['tmp_name'])) {
+                    throw new RuntimeException('Choose an included catalog or upload a CSV file no larger than 1 MB.');
+                }
+                $stream = fopen($file['tmp_name'], 'rb');
             }
-            $stream = fopen($file['tmp_name'], 'rb');
             if (!$stream) {
                 throw new RuntimeException('Cannot read the upload.');
             }
@@ -49,7 +62,7 @@ function favers_cobra_admin() {
                 fclose($stream);
             }
             $preview = !isset($_POST['apply_import']);
-            $result = favers_cobra_import($rows, $preview);
+            $result = favers_cobra_import($rows, $preview, isset($_POST['special_order']));
             echo '<div class="notice notice-success"><p>' . esc_html($result) . '</p></div>';
         } catch (Throwable $error) {
             echo '<div class="notice notice-error"><p>' . esc_html($error->getMessage()) . '</p></div>';
@@ -64,12 +77,20 @@ function favers_cobra_admin() {
     echo '<p>Each supplier SKU receives a <code>cobra-</code> prefix in WooCommerce. Review imported products, shipping, taxes, images and resale terms before publishing. No live price or inventory synchronization is provided.</p>';
     echo '<form method="post" enctype="multipart/form-data">';
     wp_nonce_field('favers_cobra_import');
-    echo '<input type="hidden" name="favers_cobra_import" value="1"><input type="file" name="cobra_csv" accept=".csv,text/csv" required><p><label><input type="checkbox" name="apply_import" value="1"> Apply import (leave unchecked to preview)</label></p>';
+    echo '<input type="hidden" name="favers_cobra_import" value="1">';
+    $source = isset($_POST['cobra_source']) && is_string($_POST['cobra_source']) ? $_POST['cobra_source'] : '';
+    echo '<p><label>Product source <select name="cobra_source">';
+    foreach (array('' => 'Upload my own CSV', 'drivers' => 'Included Cobra drivers — 111 configurations', 'irons' => 'Included Cobra iron sets — 195 configurations') as $value => $label) {
+        echo '<option value="' . esc_attr($value) . '" ' . ($source === $value ? 'selected' : '') . '>' . esc_html($label) . '</option>';
+    }
+    echo '</select></label></p><p>Included catalogs: public Cobra US retail prices checked October 19, 2026 (USD). These are snapshots, not live prices or confirmed dealer inventory. Configurations are separate products. Confirm supply before publishing.</p><p><label>Or upload a CSV <input type="file" name="cobra_csv" accept=".csv,text/csv"></label></p><p><label><input type="checkbox" name="apply_import" value="1"> Apply import (leave unchecked to preview)</label></p>';
+    $special_order = !isset($_POST['favers_cobra_import']) || isset($_POST['special_order']);
+    echo '<p><label><input type="checkbox" name="special_order" value="1" ' . ($special_order ? 'checked' : '') . '> Special order: accept orders at zero stock and notify shoppers</label></p><p>Use zero stock for items you do not hold. Confirm supplier fulfillment and communicate lead times before publishing. Uncheck Special order to prevent checkout at zero stock. This choice applies to every row in this import; it does not update products absent from the CSV.</p>';
     submit_button('Validate / Import');
     echo '</form></div>';
 }
 
-function favers_cobra_import($rows, $preview) {
+function favers_cobra_import($rows, $preview, $special_order = false) {
     $plan = array();
     foreach ($rows as $row) {
         $sku = 'cobra-' . $row['sku'];
@@ -81,7 +102,7 @@ function favers_cobra_import($rows, $preview) {
         $plan[] = array($row, $product);
     }
     if ($preview) {
-        return 'Preview passed for ' . count($plan) . ' products. No changes saved. Upload again with Apply import checked to save.';
+        return 'Preview passed for ' . count($plan) . ' products. ' . ($special_order ? 'Special orders enabled: zero-stock products will accept backorders.' : 'Special orders disabled: zero-stock products cannot be purchased.') . ' No changes saved. Upload again with Apply import checked to save.';
     }
     $term = term_exists('cobra', 'product_cat');
     if (!$term) {
@@ -108,9 +129,10 @@ function favers_cobra_import($rows, $preview) {
             $product->set_date_on_sale_to(null);
             $product->set_price($row['price']);
             $product->set_manage_stock(true);
-            $product->set_backorders('no');
+            $product->set_backorders($special_order ? 'notify' : 'no');
             $product->set_stock_quantity((int) $row['stock']);
-            $product->set_stock_status((int) $row['stock'] > 0 ? 'instock' : 'outofstock');
+            $product->set_stock_status((int) $row['stock'] > 0 ? 'instock' : ($special_order ? 'onbackorder' : 'outofstock'));
+            $product->update_meta_data('_favers_cobra_special_order', $special_order ? 'yes' : 'no');
             $product->set_category_ids(array_unique(array_merge($product->get_category_ids(), array($category_id))));
             $product->update_meta_data('_favers_cobra_source', 'supplier_csv');
             $product->save();
